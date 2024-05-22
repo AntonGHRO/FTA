@@ -28,7 +28,7 @@ char type[REQUEST_TYPES_COUNT][REQUEST_SIZE] = {
 };
 
 char *filename[REQUEST_TYPES_COUNT] = {
-	"home.html"
+	"login.html"
 };
 
 void error(const char *str) {
