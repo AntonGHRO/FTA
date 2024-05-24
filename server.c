@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#define REQUEST_SIZE 1024
+#define REQUEST_SIZE 65536
 #define REQUEST_TYPES_COUNT 16
 #define RESPONSE_SIZE 65536
 #define CONTENT_SIZE RESPONSE_SIZE >> 1
@@ -23,70 +23,55 @@ char request[REQUEST_SIZE];
 char *response;
 char content[CONTENT_SIZE];
 
-char type[REQUEST_TYPES_COUNT][REQUEST_SIZE] = {
-	"GET /"			// Home page
-};
-
-char *filename[REQUEST_TYPES_COUNT] = {
-	"login.html"
-};
-
 void error(const char *str) {
 	perror(str);
 	exit(EXIT_FAILURE);
 }
 
+void response_get_login() {
+	FILE *file = fopen("login.html", "rb");
+
+	if(file == NULL)
+		error("fopen() error");
+
+	fseek(file, 0, SEEK_END); 
+	unsigned size = ftell(file);
+	fseek(file, 0, SEEK_SET); 
+	if(fread(content, sizeof(char), size, file) != size)
+		error("fread() error");
+	fclose(file);
+
+	snprintf(response, RESPONSE_SIZE,
+		"HTTP/1.1 200 OK\n"
+		"Content-Type: text/html\n"
+		"Content-Length: %lu\n\n%s", strlen(content), content);
+}
+
 void handle_request(char *request) {
+	fprintf(stderr, "Request: %s\n", request);
+
 	if(response == NULL)
 		response = calloc(1, RESPONSE_SIZE << 1);
 
-	for(unsigned i = 0; i < REQUEST_TYPES_COUNT; i ++) {
-		if(memcmp(request, type[i], strlen(type[i])) == 0) {
-
-			FILE *file = fopen(filename[i], "rb");
-
-			if(file == NULL)
-				error("fopen() error");
-
-			fseek(file, 0, SEEK_END); 
-			unsigned size = ftell(file);
-			fseek(file, 0, SEEK_SET); 
-			if(fread(content, sizeof(char), size, file) != size)
-				error("fread() error");
-			fclose(file);
-
-			snprintf(response, RESPONSE_SIZE,
-				"HTTP/1.1 200 OK\n"
-				"Content-Type: text/html\n"
-				"Content-Length: %lu\n\n%s", strlen(content), content);
-
-			break;
-		}
-	}
+	if(memcmp(request, "GET /login", strlen("GET /login")) == 0)
+		response_get_login();
 
 	if(send(client_socket, response, strlen(response), 0) == -1)
 		error("send() error");
 
-	fprintf(stderr, "Request: %s\n", request);
-	fprintf(stderr, "Response: %s\n", response);
+	// fprintf(stderr, "Response: %s\n", response);
 }
 
 int main(int argc, char **argv) {
-
-	// Arguments
-	if(argc != 2) {
-		fprintf(stderr, "Expected port number argument to be passed\n");
-		exit(EXIT_FAILURE);
-	}
+	if(argc == 1)		port = 8080;
+	else if(argc == 2)	port = atoi(argv[1]);
+	else				exit(EXIT_FAILURE);
 
 	// Socket
 	server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(server_socket < 0)
 		error("socket() error");
-
-	// Port
-	port = atoi(argv[1]);
 
 	if(port < 2000 || port > 65535) {
 		fprintf(stderr, "Invalid port number\n");

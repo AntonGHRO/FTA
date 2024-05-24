@@ -5,6 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FTA Login</title>
+        <link rel="shortcut icon" href="favicon.ico">
         <style>
             @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
 
@@ -104,20 +105,29 @@
                 </button>
 
                 <script>
-                    function sendData() {
+                    async function sendData() {
                         const inputUN = (document.getElementById("unid")).value;
                         const inputPS = (document.getElementById("psid")).value;
-                        alert('Data sent\nUsername: ' + inputUN + '\nPassword: ' + inputPS);
 
-                        //let data = {element: "barium"};
+                        const settings = {
+                            method: 'POST',
+                            headers: {
+                                Accept: 'application/json',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                user: inputUN,
+                                pass: inputPS
+                            })
+                        };
 
-                        //fetch("/post/data/here", {
-                        //method: "POST",
-                        //headers: {'Content-Type': 'application/json'}, 
-                        //body: JSON.stringify(data)
-                        //}).then(res => {
-                        //console.log("Request complete! response:", res);
-                        //});
+                        try {
+                            const fetchResponse = await fetch('http://localhost:8080/login', settings);
+                            const data = await fetchResponse.json();
+                            alert(data);
+                        } catch (e) {
+                            return e;
+                        }
                     }
                 </script>
             </form>
