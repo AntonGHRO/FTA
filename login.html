@@ -123,8 +123,11 @@
 
                         try {
                             const fetchResponse = await fetch('http://localhost:8080/login', settings);
-                            const data = await fetchResponse.json();
-                            alert(data);
+                            const data = await fetchResponse.text();
+                            sessionStorage.setItem('keyText', data);
+
+                            // const testtest = sessionStorage.getItem('keyText');
+                            // alert(testtest);
                         } catch (e) {
                             return e;
                         }
