@@ -51,6 +51,7 @@ void response_post_login() {
 	char en[1024 << 1] = {0};
 	char *rs, *re;
 	unsigned i = 0;
+	char text[1024];
 	uint32_t hash = 2166136261U;
 
 	for(rs = request; *rs != '\"'; rs ++);
@@ -76,6 +77,13 @@ void response_post_login() {
 	FILE *file = fopen("uppair", "a");
 	fprintf(file, "%s %s %u\n", u, p, hash);
 	fclose(file);
+
+	snprintf(text, 1024, "%u", hash);
+
+	snprintf(response, RESPONSE_SIZE,
+		"HTTP/1.1 200 OK\n"
+		"Content-Type: text/plain\n"
+		"Content-Length: %lu\n\n%s", strlen(text), text);
 }
 
 void handle_request(char *request) {
@@ -94,6 +102,10 @@ void handle_request(char *request) {
 
 	// fprintf(stderr, "Response: %s\n", response);
 }
+
+// TODO: incomes-outgoings, input them (sent to databases on server), data encryption
+// data vizualization (user and admin are different). two types of auth (users and admins (added manually))
+// admin can block user
 
 int main(int argc, char **argv) {
 	if(argc == 1)		port = 8080;
