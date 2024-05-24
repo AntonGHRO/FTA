@@ -7,7 +7,6 @@
 #include <string.h>
 
 #define REQUEST_SIZE 65536
-#define REQUEST_TYPES_COUNT 16
 #define RESPONSE_SIZE 65536
 #define CONTENT_SIZE RESPONSE_SIZE >> 1
 
@@ -47,6 +46,38 @@ void response_get_login() {
 		"Content-Length: %lu\n\n%s", strlen(content), content);
 }
 
+void response_post_login() {
+	char u[1024] = {0}, p[1024] = {0};
+	char en[1024 << 1] = {0};
+	char *rs, *re;
+	unsigned i = 0;
+	uint32_t hash = 2166136261U;
+
+	for(rs = request; *rs != '\"'; rs ++);
+	rs += 8;
+
+	for(re = rs; *re != ','; re ++);
+	strncpy(u, rs, re - rs - 1);
+	re += 9;
+
+	for(rs = re; *rs != '}'; rs ++);
+	strncpy(p, re, rs - re - 1);
+
+	strcat(en, u);
+	strcat(en, p);
+
+	while(en[i] != 0) {
+		hash ^= en[i ++];
+		hash *= 16777619U;
+	}
+
+	fprintf(stderr, "User registered: %s %s %s %u\n", u, p, en, hash);
+
+	FILE *file = fopen("uppair", "a");
+	fprintf(file, "%s %s %u\n", u, p, hash);
+	fclose(file);
+}
+
 void handle_request(char *request) {
 	fprintf(stderr, "Request: %s\n", request);
 
@@ -55,6 +86,8 @@ void handle_request(char *request) {
 
 	if(memcmp(request, "GET /login", strlen("GET /login")) == 0)
 		response_get_login();
+	else if(memcmp(request, "POST /login", strlen("POST /login")) == 0)
+		response_post_login();
 
 	if(send(client_socket, response, strlen(response), 0) == -1)
 		error("send() error");

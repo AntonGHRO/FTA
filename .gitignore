@@ -1,2 +1,5 @@
 # Ignore server in case of compilation
 server
+
+# Ignore saved users
+uppair
