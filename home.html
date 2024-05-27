@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Tracking</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
+
+        /* Other CSS styles here */
+        body {
+            font-family: 'Poppins', sans-serif; /* Apply Poppins font to the entire document */
+            background-color: black; /* Set the background color to black */
+            color: white; /* Set the text color to white for visibility */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #input-container {
+            display: flex;
+            flex-direction: row; /* Arrange sections side by side */
+            margin-bottom: 20px; /* Add space between input sections */
+            justify-content: space-between; /* Distribute items evenly */
+            width: 90%; /* Set the width of the container */
+        }
+
+        .label span {
+            margin-top: 5px; /* Add space between label and value */
+        }
+        #registered-user,
+        #current-date {
+            width: 200px; /* Match the width of input boxes */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Align items horizontally */
+            font-family: 'Poppins', sans-serif; /* Apply Poppins font */
+            font-size: 14px; /* Match the font size of input boxes */
+        }
+
+        .label {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center items horizontally */
+            justify-content: center;
+        }
+
+        .label span:first-child {
+            font-weight: bold; /* Make the label text bold */
+            font-size: 24px; /* Increase the font size */
+            text-align: center; /* Center the label text */
+        }
+
+        .label span:last-child {
+            font-size: 24px; /* Increase the font size for the value */
+            text-align: center; /* Center the value text */
+        }
+        
+        #registered-user {
+            margin-right: 20px; /* Adjust the right margin */
+        }
+
+        #current-date {
+            margin-left: 20px; /* Adjust the left margin */
+        }
+
+        #income-section {
+            margin-right: 20px; /* Add space between incomes and outgoings */
+        }
+
+        #chart-container {
+            width: 90%; /* Set the width of the chart container */
+            height: 800px; /* Set the height of the chart container */
+            margin-top: 40px; /* Add space between input sections and chart */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            background-color: black; /* Set the canvas background to a dark color */
+            max-width: 100%; /* Ensure the canvas does not exceed the container width */
+            max-height: 100%; /* Ensure the canvas does not exceed the container height */
+        }
+
+        /* Style for input elements */
+        input[type="text"],
+        input[type="date"] {
+            font-family: 'Poppins', sans-serif; /* Apply Poppins font to the entire document */
+            width: 150px;
+            margin-bottom: 10px;
+            background-color: transparent; /* Set input background color to transparent */
+            border: 2px solid white; /* Add white border */
+            color: white; /* Set text color to white */
+            padding: 10px; /* Add padding */
+            border-radius: 5px; /* Make corners round */
+        }
+
+        /* Style for buttons */
+        button {
+            font-family: 'Poppins', sans-serif; /* Apply Poppins font to the entire document */
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background-color: transparent; /* Set button background color to transparent */
+            border: 2px solid white; /* Add white border */
+            color: white; /* Set text color to white */
+            border-radius: 5px; /* Make corners round */
+        }
+    </style>
+</head>
+<body>
+    <div id="input-container">
+        <div class="label" id="registered-user">
+            <span>Registered user:</span>
+            <span id="username">John Doe</span>
+        </div>
+        <div id="income-section">
+            <h2>Add Income</h2>
+            <input type="text" id="incomeAmount" placeholder="Amount">
+            <input type="date" id="incomeDate">
+            <button id="addIncomeBtn">Add</button>
+        </div>
+        <div id="expense-section">
+            <h2>Add Expense</h2>
+            <input type="text" id="expenseAmount" placeholder="Amount">
+            <input type="date" id="expenseDate">
+            <button id="addExpenseBtn">Add</button>
+        </div>
+        <div class="label" id="current-date">
+            <span>Current date:</span>
+            <span id="currentDate"></span>
+        </div>
+    </div>
+    <div id="chart-container">
+        <canvas id="financialChart"></canvas>
+    </div>
+    <script>
+        const currentDateElement = document.getElementById('currentDate');
+        const currentDate = new Date();
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const year = currentDate.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        currentDateElement.textContent = formattedDate;
+
+        const dateLabels = generateDateLabels();
+
+        const financialData = {
+            labels: dateLabels,
+            datasets: [
+                {
+                    label: 'Incomes',
+                    data: Array.from({ length: dateLabels.length }, () => Math.floor(Math.random() * 1000) + 200),
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Outgoings',
+                    data: Array.from({ length: dateLabels.length }, () => Math.floor(Math.random() * 800) + 100),
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        };
+
+        const config = {
+            type: 'line',
+            data: financialData,
+            options: {
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                            color: 'rgba(255, 255, 255, 0.2)',
+                            borderDash: [5, 5],
+                        },
+                        ticks: {
+                            color: 'white'
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: true,
+                            color: 'rgba(255, 255, 255, 0.2)',
+                            borderDash: [5, 5],
+                        },
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white'
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    },
+                    tooltip: {
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)'
+                    }
+                }
+            }
+        };
+
+        async function sendData() {
+            const key = sessionStorage.getItem('sv_key');
+
+            const settings = {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({lookfor: key})
+            };
+
+            try {
+                const fetchResponse = await fetch('http://localhost:8080/home', settings);
+
+                if(!fetchResponse.ok) {
+                    console.error('HTTP error:', fetchResponse.status, fetchResponse.statusText);
+                    return e;
+                }
+
+                const data = await fetchResponse.text();
+                sessionStorage.setItem('sv_username', data);
+            } catch (e) {
+                console.error('Fetch error:', e);
+                return e;
+            }
+        }
+
+        function generateDateLabels() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const dateLabels = [];
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayString = String(day).padStart(2, '1');
+                const monthString = String(month + 1).padStart(2, '1');
+                const dateString = `${dayString}/${monthString}`;
+                dateLabels.push(dateString);
+            }
+
+            return dateLabels;
+        }
+
+        window.onload = async () => {
+            await sendData();
+
+            const ctx = document.getElementById('financialChart').getContext('2d');
+            new Chart(ctx, config);
+
+            //const userNameSpan = document.getElementById('username');
+            //userNameSpan.textContent = sessionStorage.getItem('sv_username');
+        };
+    </script>
+</body>
+</html>
