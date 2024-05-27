@@ -7,8 +7,8 @@
 #include <string.h>
 
 #define REQUEST_SIZE 65536
-#define RESPONSE_SIZE 65536
-#define CONTENT_SIZE RESPONSE_SIZE >> 1
+#define RESPONSE_SIZE 65536 << 1
+#define CONTENT_SIZE 65536
 
 int server_socket;
 int client_socket;
@@ -43,7 +43,9 @@ void response_get_login() {
 	snprintf(response, RESPONSE_SIZE,
 		"HTTP/1.1 200 OK\n"
 		"Content-Type: text/html\n"
-		"Content-Length: %lu\n\n%s", strlen(content), content);
+		"Content-Length: %u\n\n%s", size, content);
+
+	response[strlen(response)] = 0;
 }
 
 void response_post_login() {
@@ -80,10 +82,41 @@ void response_post_login() {
 
 	snprintf(text, 1024, "%u", hash);
 
+	fprintf(stderr, "\n!!!%lu!!!\n", strlen(text));
+
 	snprintf(response, RESPONSE_SIZE,
 		"HTTP/1.1 200 OK\n"
 		"Content-Type: text/plain\n"
 		"Content-Length: %lu\n\n%s", strlen(text), text);
+	
+	response[strlen(response)] = 0;
+}
+
+void response_home() {
+	FILE *file = fopen("home.html", "rb");
+
+	if(file == NULL)
+		error("fopen() error");
+
+	fseek(file, 0, SEEK_END); 
+	unsigned size = ftell(file);
+	fseek(file, 0, SEEK_SET); 
+	if(fread(content, sizeof(char), size, file) != size)
+		error("fread() error");
+	fclose(file);
+
+	fprintf(stderr, "\n!!!%u!!!\n", size);
+
+	snprintf(response, RESPONSE_SIZE,
+		"HTTP/1.1 200 OK\n"
+		"Content-Type: text/html\n"
+		"Content-Length: %u\n\n%s", size, content);
+
+	response[strlen(response)] = 0;
+}
+
+void response_post_home() {
+	fprintf(stderr, "\n\n%s\n\n", request);
 }
 
 void handle_request(char *request) {
@@ -96,11 +129,13 @@ void handle_request(char *request) {
 		response_get_login();
 	else if(memcmp(request, "POST /login", strlen("POST /login")) == 0)
 		response_post_login();
+	else if(memcmp(request, "GET /home", strlen("GET /home")) == 0)
+		response_home();
+	else if(memcmp(request, "POST /home", strlen("POST /home")) == 0)
+		response_post_home();
 
 	if(send(client_socket, response, strlen(response), 0) == -1)
 		error("send() error");
-
-	// fprintf(stderr, "Response: %s\n", response);
 }
 
 // TODO: incomes-outgoings, input them (sent to databases on server), data encryption
