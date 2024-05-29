@@ -227,7 +227,7 @@
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({lookfor: key})
+                body: JSON.stringify({'KEYSPECIAL': key, 'END': 0})
             };
 
             try {
@@ -238,11 +238,12 @@
                     return;
                 }
 
-                const data = await fetchResponse.json();
-                console.log('Received data:', data);
+                const data = await fetchResponse.text();
+                console.error('Received data:', data);
+                sessionStorage.setItem('sv_username', data);
 
                 // Update chart data here based on received data
-                updateChart(data);
+                // updateChart(data.);
 
             } catch (e) {
                 console.error('Fetch error:', e);

@@ -124,7 +124,43 @@ void response_home() {
 }
 
 void response_post_home() {
-    fprintf(stderr, "\n\n%s\n\n", request);
+	unsigned len;
+	char *string = NULL;
+
+	char *key = strstr(request, "KEYSPECIAL") + 13;
+	key[strchr(key, '\"') - key] = 0;
+
+	FILE *file = fopen("uppair", "r");
+    if (file == NULL) error("fopen() error");
+
+	fseek(file, 0, SEEK_END);
+	len = ftell(file);
+	fseek(file, 0, SEEK_SET);
+	string = calloc(len + 1, sizeof(char));
+	if(fread(string, sizeof(char), len, file) != len) error("fread() error");
+	char *found = strstr(string, key);
+	if(found == NULL) error("Could not find key");
+    fclose(file);
+
+	while(*found != ' ') found --;
+	found --;
+	while(*found != ' ') found --;
+	(*found) = 0;
+	found --;
+	while(*found != '\n' && found != string) found --;
+	if(found != string) found ++;
+
+	// fprintf(stderr, "\n%s\n", found);
+
+	snprintf(response, RESPONSE_SIZE,
+             "HTTP/1.1 200 OK\r\n"
+             "Content-Type: application/json\r\n"
+             "Content-Length: %lu\r\n\r\n%s",
+             strlen(found), found);
+
+	response[strlen(response)] = 0;
+
+	fprintf(stderr, "\nResponse:\n%s\n", response);
 }
 
 void handle_request(char *request) {
