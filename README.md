@@ -2,7 +2,8 @@
 
 ## Overview
 
-FTA is a server application that provides a web server for a financial tracker application.
+- FTA is a server application that provides a web server for a financial tracker application.
+- This is just an example meant for practicing writing a web server in C.
 
 ## Prerequisites
 
